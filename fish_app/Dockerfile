@@ -2,6 +2,7 @@ FROM nvcr.io/nvidia/deepstream:7.0-triton-multiarch
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
+    git \
     libglib2.0-dev \
     libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev \
@@ -23,9 +24,9 @@ RUN pip3 install opencv-python-headless pyyaml numpy
 # Install pyds (DeepStream Python Bindings)
 # Note: This usually requires building from source or installing a wheel compatible with the DS version.
 # For DS 7.0, we can try to install from the provided wheels in the image if available, or clone deepstream_python_apps
-RUN cd /opt/nvidia/deepstream/deepstream/user_additional_plugins/ && \
-    if [ -d "deepstream-python-apps" ]; then \
-        echo "deepstream-python-apps exists"; \
+RUN cd /opt/nvidia/deepstream/deepstream/sources/ && \
+    if [ -d "deepstream_python_apps" ]; then \
+        echo "deepstream_python_apps exists"; \
     else \
         git clone https://github.com/NVIDIA-AI-IOT/deepstream_python_apps.git; \
     fi
