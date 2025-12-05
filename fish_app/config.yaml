@@ -1,0 +1,51 @@
+# Fish Monitoring System Configuration File
+# Adjust these parameters without modifying the code
+
+# Model Configuration
+model:
+  # Use separate models for top and side views (recommended for best accuracy)
+  path_top_view: 'models/yolov8_top_fish_detector_251119_14-25-1119-0001.pt'
+  path_side_view: 'models/yolov8_side_fish_detector_251119_13-25-1119-0001.pt'
+  
+# Video Sources
+video:
+  pixel_format: 'BayerRG8'
+  top_source: 'Hikrobot-MV-CS023-10GC-DA7235770'   # Top view GigE camera
+  side_source: 'Hikrobot-MV-CS023-10GC-DA7235740'   # Side view GigE camera
+  
+  width: 960
+  height: 720
+  fps: 30
+  exposure_time: 11000
+
+# Fish Counting
+counting:
+  expected_count: 20
+  stabilization_window: 30
+
+# Behavioral Analysis Thresholds
+behavior:
+  dead:
+    velocity_threshold: 0.5
+    time_threshold: 10
+  
+  sick:
+    top_zone: 0.15
+    gasping_time: 30
+    gasping_percent: 0.4
+    erratic_velocity: 4.0
+    erratic_time: 5
+    bottom_zone: 0.5
+    sinking_time: 15
+    straying_distance: 300
+    straying_time: 15
+
+# Tracker Configuration
+tracker:
+  type: 'bytetrack.yaml'
+  memory: 60
+  occlusion_buffer: 2.0
+
+# Alert Configuration
+alerts:
+  poor_lighting_threshold: 50
