@@ -3,15 +3,19 @@ services:
   fish-app:
     build: .
     image: fish-deepstream-app
+    container_name: fish_deepstream_container
+    # Runtime nvidia is required for Jetson/dGPU access
     runtime: nvidia
+    # Host network is required for GigE cameras (Aravis) to work
     network_mode: host
     privileged: true
     volumes:
       - .:/app
       - /tmp/.X11-unix:/tmp/.X11-unix
+      - /run/jtop.sock:/run/jtop.sock # Optional: for jetson-stats
     environment:
       - DISPLAY=$DISPLAY
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
-    ports:
-      - "8000:8000"
+      - FISH_VIEW_MODE=both
+    restart: unless-stopped

@@ -1,8 +1,13 @@
-FROM nvcr.io/nvidia/deepstream:7.0-triton-multiarch
+# Use the multi-arch image which supports Jetson (L4T) for DeepStream 7.0
+# Use the multi-arch image which supports Jetson (L4T) for DeepStream 7.0
+FROM nvcr.io/nvidia/deepstream:7.0-triton-multiarch-multiarch
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
     git \
+    cmake \
+    g++ \
+    build-essential \
     libglib2.0-dev \
     libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev \
@@ -12,27 +17,41 @@ RUN apt-get update && apt-get install -y \
     libaravis-dev \
     aravis-tools \
     python3-gi \
+    python3-gi-cairo \
     python3-dev \
     python3-pip \
     python3-gst-1.0 \
+    python3-numpy \
+    meson \
+    ninja-build \
+    gobject-introspection \
     && rm -rf /var/lib/apt/lists/*
 
-# Install python packages
-RUN pip3 install --upgrade pip
-RUN pip3 install opencv-python-headless pyyaml numpy
+# Install python packages (pin numpy to 1.26.x for compatibility)
+RUN pip3 install --upgrade pip && \
+    pip3 uninstall -y numpy || true && \
+    pip3 install --no-cache-dir "numpy==1.26.4" && \
+    pip3 install --no-cache-dir opencv-python-headless pyyaml
 
-# Install pyds (DeepStream Python Bindings)
-# Note: This usually requires building from source or installing a wheel compatible with the DS version.
-# For DS 7.0, we can try to install from the provided wheels in the image if available, or clone deepstream_python_apps
+# Fix missing symlinks for DeepStream libraries (known issue in DS 7.0 container)
+RUN cd /opt/nvidia/deepstream/deepstream/lib/ && \
+    ln -sf libnvbufsurface.so.1.0.0 libnvbufsurface.so && \
+    ln -sf libnvbufsurftransform.so.1.0.0 libnvbufsurftransform.so && \
+    ldconfig
+
+# Install pyds (DeepStream Python Bindings) for DS 7.0
+# We skip building gst-python because we installed python3-gst-1.0 via apt
 RUN cd /opt/nvidia/deepstream/deepstream/sources/ && \
-    if [ -d "deepstream_python_apps" ]; then \
-        echo "deepstream_python_apps exists"; \
-    else \
-        git clone https://github.com/NVIDIA-AI-IOT/deepstream_python_apps.git; \
-    fi
-
-# Assuming pyds is available or installed. If not, user needs to build it.
-# For simplicity, we assume the base image or user handles pyds.
+    git clone https://github.com/NVIDIA-AI-IOT/deepstream_python_apps.git && \
+    cd deepstream_python_apps && \
+    git checkout v1.1.11 && \
+    git submodule update --init && \
+    cd bindings && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make -j$(nproc) && \
+    pip3 install ./pyds-*.whl
 
 WORKDIR /app
 COPY . /app
